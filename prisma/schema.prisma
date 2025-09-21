@@ -1,0 +1,267 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+enum Platform {
+  youtube
+  instagram
+  tiktok
+  snapchat
+  pinterest
+  facebook
+  twitter
+  reddit
+  discord
+  linkedin
+  whatsapp
+  telegram
+  bluesky
+}
+
+enum PostStatus {
+  DRAFT
+  QUEUED
+  UPLOADING
+  PUBLISHED
+  FAILED
+}
+
+enum HashtagSource {
+  auto
+  manual
+}
+
+enum ScheduledJobType {
+  UPLOAD
+  PUBLISH
+  FIRST_COMMENT
+  METRICS_REFRESH
+}
+
+enum TemplateScope {
+  global
+  platform
+  brand_platform
+}
+
+enum AttachMode {
+  prepend
+  append
+  replace
+}
+
+enum SourceType {
+  upload
+  url
+  cloud
+}
+
+enum UploadBuffer {
+  m5
+  m10
+  m15
+  m30
+  m60
+  m180
+  m360
+  m720
+  m1440
+  m2880
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  image     String?
+  locale    String   @default("en")
+  createdAt DateTime @default(now())
+  brands    Brand[]
+  memberships BrandMember[]
+}
+
+model Brand {
+  id              String   @id @default(cuid())
+  ownerId         String
+  name            String
+  avatarUrl       String?
+  primaryColor    String   @default("#7C3AED")
+  defaultTimezone String   @default("UTC")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  owner       User        @relation(fields: [ownerId], references: [id])
+  members     BrandMember[]
+  accounts    Account[]
+  templates   Template[]
+  mediaAssets MediaAsset[]
+  posts       Post[]
+  commentPolicies FirstCommentPolicy[]
+  auditLogs   AuditLog[]
+}
+
+model BrandMember {
+  id        String   @id @default(cuid())
+  brandId   String
+  userId    String
+  role      Role
+  createdAt DateTime @default(now())
+
+  brand Brand @relation(fields: [brandId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+}
+
+model Account {
+  id           String   @id @default(cuid())
+  brandId      String
+  platform     Platform
+  label        String
+  externalIds  Json
+  isActive     Boolean  @default(true)
+  orderIndex   Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  brand        Brand             @relation(fields: [brandId], references: [id])
+  credentials  AccountCredential?
+  postTargets  PostTarget[]
+}
+
+model AccountCredential {
+  id           String   @id @default(cuid())
+  accountId    String   @unique
+  provider     String
+  accessToken  String
+  refreshToken String?
+  expiresAt    DateTime?
+  scopes       String[]
+  metadata     Json
+
+  account Account @relation(fields: [accountId], references: [id])
+}
+
+model Template {
+  id                  String   @id @default(cuid())
+  brandId             String?
+  scope               TemplateScope
+  platform            Platform?
+  name                String
+  body                String
+  attachMode          AttachMode @default(append)
+  defaultForPlatform  Boolean    @default(false)
+  isActive            Boolean    @default(true)
+
+  brand Brand? @relation(fields: [brandId], references: [id])
+}
+
+model MediaAsset {
+  id          String   @id @default(cuid())
+  brandId     String
+  storageKey  String
+  mimeType    String
+  durationSec Int?
+  width       Int?
+  height      Int?
+  sizeBytes   Int?
+  checksum    String?
+  sourceType  SourceType
+  sourceUrl   String?
+  createdAt   DateTime @default(now())
+
+  brand Brand @relation(fields: [brandId], references: [id])
+  posts PostTarget[]
+}
+
+model Post {
+  id                 String   @id @default(cuid())
+  brandId            String
+  title              String
+  userText           String
+  selectedTemplateId String?
+  resolvedText       String?
+  hashtagSource      HashtagSource @default(auto)
+  status             PostStatus    @default(DRAFT)
+  timezone           String        @default("UTC")
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  brand     Brand    @relation(fields: [brandId], references: [id])
+  targets   PostTarget[]
+  template  Template? @relation(fields: [selectedTemplateId], references: [id])
+}
+
+model PostTarget {
+  id                   String   @id @default(cuid())
+  postId               String
+  accountId            String
+  scheduleAt           DateTime
+  uploadBuffer         UploadBuffer
+  mediaAssetId         String
+  thumbnailAssetId     String?
+  firstCommentPolicyId String?
+  platformSpecific     Json
+  resultRef            Json?
+  status               PostStatus @default(DRAFT)
+
+  post      Post       @relation(fields: [postId], references: [id])
+  account   Account    @relation(fields: [accountId], references: [id])
+  media     MediaAsset @relation(fields: [mediaAssetId], references: [id])
+  firstCommentPolicy FirstCommentPolicy? @relation(fields: [firstCommentPolicyId], references: [id])
+  analytics AnalyticsSnapshot[]
+}
+
+model FirstCommentPolicy {
+  id                 String   @id @default(cuid())
+  brandId            String
+  rules              Json
+  pinPreferred       Boolean  @default(false)
+  appliesToPlatforms String[]
+
+  brand Brand @relation(fields: [brandId], references: [id])
+  targets PostTarget[]
+}
+
+model ScheduledJob {
+  id              String          @id @default(cuid())
+  type            ScheduledJobType
+  targetId        String
+  runAt           DateTime
+  attempts        Int       @default(0)
+  backoffStrategy String
+  status          String
+  lastError       String?
+}
+
+model AnalyticsSnapshot {
+  id           String   @id @default(cuid())
+  postTargetId String
+  collectedAt  DateTime @default(now())
+  metrics      Json
+
+  postTarget PostTarget @relation(fields: [postTargetId], references: [id])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  brandId   String
+  userId    String?
+  action    String
+  entityType String
+  entityId  String
+  before    Json?
+  after     Json?
+  createdAt DateTime @default(now())
+
+  brand Brand @relation(fields: [brandId], references: [id])
+  user  User? @relation(fields: [userId], references: [id])
+}

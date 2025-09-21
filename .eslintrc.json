@@ -1,0 +1,9 @@
+{
+  "root": true,
+  "extends": ["next", "prettier"],
+  "settings": {
+    "next": {
+      "rootDir": ["apps/web"]
+    }
+  }
+}

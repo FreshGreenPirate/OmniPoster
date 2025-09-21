@@ -1,0 +1,21 @@
+{
+  "name": "@omniposter/core",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsup src/index.ts --dts --format esm,cjs --out-dir dist",
+    "dev": "tsup src/index.ts --watch",
+    "lint": "eslint 'src/**/*.{ts,tsx}'",
+    "test": "vitest run",
+    "format": "prettier --write 'src/**/*.{ts,tsx,json}'"
+  },
+  "dependencies": {
+    "zod": "3.22.4"
+  },
+  "devDependencies": {
+    "tsup": "7.2.0",
+    "vitest": "1.4.0"
+  }
+}

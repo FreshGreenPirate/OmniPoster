@@ -1,0 +1,18 @@
+{
+  "nav": {
+    "create": "Create",
+    "publish": "Publish",
+    "analyze": "Analyze",
+    "engage": "Engage",
+    "collaborate": "Collaborate",
+    "start_page": "Start Page"
+  },
+  "quick_links": {
+    "calendar": "Calendar",
+    "analytics": "Analytics",
+    "link_in_bio": "Link in Bio",
+    "bulk_upload": "Bulk Upload",
+    "auto_publishing": "Auto Publishing",
+    "hashtag_research": "Hashtag Research"
+  }
+}
