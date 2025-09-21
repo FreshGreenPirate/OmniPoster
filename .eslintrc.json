@@ -1,0 +1,13 @@
+{
+  "root": true,
+  "extends": [
+    "next",
+    "prettier"
+  ],
+  "plugins": [
+    "@typescript-eslint"
+  ],
+  "rules": {
+    "@typescript-eslint/consistent-type-imports": "error"
+  }
+}

@@ -1,0 +1,11 @@
+node_modules
+.pnpm-store
+.next
+coverage
+.env
+.env.local
+.playwright
+artifacts
+.DS_Store
+.prisma
+pnpm-lock.yaml
