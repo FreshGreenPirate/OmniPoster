@@ -1,0 +1,246 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Platform {
+  youtube
+  instagram
+  tiktok
+  snapchat
+  pinterest
+  facebook
+  twitter
+  reddit
+  discord
+  linkedin
+  whatsapp
+  telegram
+  bluesky
+}
+
+enum Role {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+enum PostStatus {
+  DRAFT
+  QUEUED
+  UPLOADING
+  PUBLISHED
+  FAILED
+}
+
+enum TemplateScope {
+  global
+  platform
+  brand_platform
+}
+
+enum TemplateAttachMode {
+  prepend
+  append
+  replace
+}
+
+enum JobType {
+  UPLOAD
+  PUBLISH
+  FIRST_COMMENT
+  METRICS_REFRESH
+}
+
+enum HashtagSource {
+  auto
+  manual
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  image     String?
+  locale    String   @default("en")
+  createdAt DateTime @default(now())
+  brands    Brand[]
+  members   BrandMember[]
+  auditLogs AuditLog[]
+}
+
+model Brand {
+  id              String         @id @default(uuid())
+  ownerId         String
+  owner           User           @relation(fields: [ownerId], references: [id])
+  name            String
+  avatarUrl       String?
+  primaryColor    String?
+  defaultTimezone String         @default("UTC")
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  members         BrandMember[]
+  accounts        Account[]
+  templates       Template[]
+  mediaAssets     MediaAsset[]
+  posts           Post[]
+  commentPolicies FirstCommentPolicy[]
+  auditLogs       AuditLog[]
+}
+
+model BrandMember {
+  id        String   @id @default(uuid())
+  brandId   String
+  userId    String
+  role      Role
+  createdAt DateTime @default(now())
+  brand     Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([brandId, userId])
+}
+
+model Account {
+  id          String   @id @default(uuid())
+  brandId     String
+  platform    Platform
+  label       String
+  externalIds Json     @default(json('{}'))
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  orderIndex  Int      @default(0)
+  brand       Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  credentials AccountCredential?
+  postTargets PostTarget[]
+}
+
+model AccountCredential {
+  id           String   @id @default(uuid())
+  accountId    String   @unique
+  provider     String
+  accessToken  String
+  refreshToken String?
+  expiresAt    DateTime?
+  scopes       String[]
+  metadata     Json?
+  account      Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+}
+
+model Template {
+  id                 String            @id @default(uuid())
+  brandId            String?
+  scope              TemplateScope     @default(brand_platform)
+  platform           Platform?
+  name               String
+  body               String
+  attachMode         TemplateAttachMode @default(append)
+  defaultForPlatform Boolean           @default(false)
+  isActive           Boolean           @default(true)
+  brand              Brand?            @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  posts              Post[]
+}
+
+model MediaAsset {
+  id          String   @id @default(uuid())
+  brandId     String
+  storageKey  String
+  mimeType    String
+  durationSec Int?
+  width       Int?
+  height      Int?
+  sizeBytes   Int
+  checksum    String
+  sourceType  String
+  sourceUrl   String?
+  createdAt   DateTime @default(now())
+  brand       Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  mainTargets PostTarget[] @relation("MediaAssetMain")
+  thumbTargets PostTarget[] @relation("MediaAssetThumb")
+}
+
+model Post {
+  id                 String      @id @default(uuid())
+  brandId            String
+  title              String?
+  userText           String
+  selectedTemplateId String?
+  resolvedText       String?
+  hashtagSource      HashtagSource @default(auto)
+  status             PostStatus  @default(DRAFT)
+  timezone           String      @default("UTC")
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+  brand              Brand       @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  selectedTemplate   Template?   @relation(fields: [selectedTemplateId], references: [id])
+  targets            PostTarget[]
+  analytics          AnalyticsSnapshot[]
+}
+
+model PostTarget {
+  id                   String      @id @default(uuid())
+  postId               String
+  accountId            String
+  scheduleAt           DateTime
+  uploadBuffer         Int
+  mediaAssetId         String
+  thumbnailAssetId     String?
+  firstCommentPolicyId String?
+  platformSpecific     Json        @default(json('{}'))
+  resultRef            Json?
+  status               PostStatus  @default(DRAFT)
+  post                 Post        @relation(fields: [postId], references: [id], onDelete: Cascade)
+  account              Account     @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  mediaAsset           MediaAsset  @relation("MediaAssetMain", fields: [mediaAssetId], references: [id])
+  thumbnailAsset       MediaAsset? @relation("MediaAssetThumb", fields: [thumbnailAssetId], references: [id])
+  firstCommentPolicy   FirstCommentPolicy? @relation(fields: [firstCommentPolicyId], references: [id])
+  scheduledJobs        ScheduledJob[]
+  analytics            AnalyticsSnapshot[]
+}
+
+model FirstCommentPolicy {
+  id                 String   @id @default(uuid())
+  brandId            String
+  rules              Json
+  pinPreferred       Boolean @default(false)
+  appliesToPlatforms String[]
+  brand              Brand   @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  postTargets        PostTarget[]
+}
+
+model ScheduledJob {
+  id              String   @id @default(uuid())
+  type            JobType
+  targetId        String
+  runAt           DateTime
+  attempts        Int      @default(0)
+  backoffStrategy String?
+  status          String   @default("PENDING")
+  lastError       String?
+  target          PostTarget? @relation(fields: [targetId], references: [id])
+}
+
+model AnalyticsSnapshot {
+  id           String   @id @default(uuid())
+  postTargetId String
+  collectedAt  DateTime @default(now())
+  metrics      Json
+  target       PostTarget @relation(fields: [postTargetId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  brandId   String
+  userId    String
+  action    String
+  entityType String
+  entityId  String
+  before    Json?
+  after     Json?
+  createdAt DateTime @default(now())
+  brand     Brand   @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

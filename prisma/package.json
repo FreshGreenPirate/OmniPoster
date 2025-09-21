@@ -1,0 +1,21 @@
+{
+  "name": "@omniposter/prisma",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "generate": "prisma generate",
+    "migrate": "prisma migrate dev",
+    "seed": "tsx scripts/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "5.8.1",
+    "@omniposter/core": "workspace:*",
+    "@omniposter/providers": "workspace:*",
+    "luxon": "3.4.4"
+  },
+  "devDependencies": {
+    "prisma": "5.8.1",
+    "tsx": "4.7.1",
+    "typescript": "5.3.3"
+  }
+}

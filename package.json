@@ -1,0 +1,25 @@
+{
+  "name": "omniposter",
+  "private": true,
+  "packageManager": "pnpm@8.15.4",
+  "scripts": {
+    "build": "pnpm -r build",
+    "dev": "pnpm --filter web dev",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
+    "format": "prettier --write .",
+    "postinstall": "pnpm -r postinstall"
+  },
+  "devDependencies": {
+    "@types/node": "20.11.17",
+    "prettier": "3.2.5"
+  },
+  "pnpm": {
+    "packages": {
+      "apps/*": {},
+      "packages/*": {},
+      "prisma": {},
+      "scripts": {}
+    }
+  }
+}
