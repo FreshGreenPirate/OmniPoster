@@ -1,0 +1,14 @@
+{
+  "navigation": {
+    "create": "Create",
+    "publish": "Publish",
+    "analyze": "Analyze",
+    "engage": "Engage",
+    "collaborate": "Collaborate",
+    "start": "Start Page"
+  },
+  "actions": {
+    "compose": "Compose post",
+    "bulkUpload": "Bulk upload"
+  }
+}

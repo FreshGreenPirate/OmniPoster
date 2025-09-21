@@ -1,0 +1,43 @@
+{
+  "name": "omni-poster-monorepo",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@8.15.4",
+  "scripts": {
+    "postinstall": "pnpm -r --filter ./packages/** install && pnpm -r --filter ./apps/** install",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "test": "vitest",
+    "dev": "pnpm --filter @omni/web dev",
+    "worker": "pnpm --filter @omni/worker dev",
+    "prisma:setup": "pnpm dlx prisma migrate deploy && pnpm dlx prisma db seed",
+    "prepare": "husky install"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@swc/core"
+    ]
+  },
+  "prisma": {
+    "seed": "ts-node --transpile-only scripts/seed.ts"
+  },
+  "devDependencies": {
+    "@prisma/client": "^5.7.1",
+    "prisma": "^5.7.1",
+    "typescript": "^5.3.3",
+    "ts-node": "^10.9.2",
+    "eslint": "^8.56.0",
+    "prettier": "^3.1.1",
+    "vitest": "^1.1.0",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,json,css,md}": [
+      "prettier --check"
+    ],
+    "apps/**/src/**/*.{ts,tsx}": [
+      "eslint --max-warnings=0"
+    ]
+  }
+}
