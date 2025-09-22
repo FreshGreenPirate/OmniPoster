@@ -28,7 +28,7 @@ const quickLinks = [
   { href: '/planning', label: 'Planning' }
 ];
 
-export function AppShell({ children }: PropsWithChildren) {
+export default function AppShell({ children }: PropsWithChildren) {
   const pathname = usePathname() ?? "";
 
   return (
