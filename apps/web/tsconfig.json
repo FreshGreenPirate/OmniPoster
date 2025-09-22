@@ -1,36 +1,11 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "baseUrl": ".",
+    "paths": { "@/*": ["src/*"] },
     "jsx": "preserve",
-    "types": [
-      "node",
-      "vitest/globals",
-      "@types/testing-library__jest-dom"
-    ],
-    "paths": {
-      "@/components/*": [
-        "./src/components/*"
-      ],
-      "@/lib/*": [
-        "./src/lib/*"
-      ],
-      "@/app/*": [
-        "./src/app/*"
-      ],
-      "@/features/*": [
-        "./src/features/*"
-      ],
-      "@/types/*": [
-        "./src/types/*"
-      ]
-    }
+    "types": ["node", "vitest/globals", "@types/testing-library__jest-dom"]
   },
-  "include": [
-    "next-env.d.ts",
-    "src/**/*",
-    "playwright"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["next-env.d.ts", "src/**/*", "playwright"],
+  "exclude": ["node_modules", ".next/types/**/*.ts"]
 }
